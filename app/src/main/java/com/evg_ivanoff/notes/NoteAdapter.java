@@ -30,7 +30,21 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NotesViewHolde
         holder.textViewTitle.setText(note.getTitle());
         holder.textViewDescription.setText(note.getDescription());
         holder.textViewDayOfWeek.setText(note.getDayOfWeek());
-        holder.textViewPriority.setText(String.format("%s", note.getPriority()));
+
+        int colorID;
+        int priority = note.getPriority();
+        switch (priority) {
+            case 1:
+                colorID = holder.itemView.getResources().getColor(android.R.color.holo_red_light);
+                break;
+            case 2:
+                colorID = holder.itemView.getResources().getColor(android.R.color.holo_orange_light);
+                break;
+            default:
+                colorID = holder.itemView.getResources().getColor(android.R.color.holo_green_light);
+                break;
+        }
+        holder.textViewTitle.setBackgroundColor(colorID);
     }
 
     @Override
@@ -39,13 +53,12 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NotesViewHolde
     }
 
     class NotesViewHolder extends RecyclerView.ViewHolder {
-        private TextView textViewTitle, textViewDescription, textViewDayOfWeek, textViewPriority;
+        private TextView textViewTitle, textViewDescription, textViewDayOfWeek;
         public NotesViewHolder(@NonNull View itemView) {
             super(itemView);
             textViewTitle = itemView.findViewById(R.id.textViewTitle);
             textViewDescription = itemView.findViewById(R.id.textViewDescription);
             textViewDayOfWeek = itemView.findViewById(R.id.textViewDayOfWeek);
-            textViewPriority = itemView.findViewById(R.id.textViewPriority);
         }
     }
 }
