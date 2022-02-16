@@ -10,36 +10,36 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
     private RecyclerView recyclerViewNotes;
     private final ArrayList<Note> notes = new ArrayList<>();
     private NoteAdapter adapter;
-    private NotesDBHelper dbHelper;
-    private SQLiteDatabase database;
+    private MainViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        viewModel = ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication()).create(MainViewModel.class);
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null){
             actionBar.hide();
         }
 
         recyclerViewNotes = findViewById(R.id.recyclerViewNotes);
-
-        dbHelper = new NotesDBHelper(this);
-        database = dbHelper.getWritableDatabase();
-        getData();
-
         adapter = new NoteAdapter(notes);
+        getData();
         recyclerViewNotes.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         recyclerViewNotes.setAdapter(adapter);
         adapter.setOnNoteClickListener(new NoteAdapter.OnNoteClickListener() {
@@ -69,12 +69,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void removeNote(int position) {
-        int id = notes.get(position).getId();
-        String where = NotesContract.NotesEntry._ID + " = ?";
-        String[] whereArgs = new String[]{Integer.toString(id)};
-        database.delete(NotesContract.NotesEntry.TABLE_NAME, where, whereArgs);
-        getData();
-        adapter.notifyDataSetChanged();
+        Note note = adapter.getNotes().get(position);
+        viewModel.deleteNote(note);
     }
 
     public void onClickNewNote(View view) {
@@ -82,20 +78,13 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    private void getData() {
-        notes.clear();
-        String selection = NotesContract.NotesEntry.COLUMN_PRIORITY + " < ?";
-        String[] selectionArgs = new String[]{"3"};
-        Cursor cursor = database.query(NotesContract.NotesEntry.TABLE_NAME, null, selection, selectionArgs, null, null, NotesContract.NotesEntry.COLUMN_PRIORITY);
-        while (cursor.moveToNext()) {
-            int id = cursor.getInt(cursor.getColumnIndexOrThrow(NotesContract.NotesEntry._ID));
-            String title = cursor.getString(cursor.getColumnIndexOrThrow(NotesContract.NotesEntry.COLUMN_TITLE));
-            String description = cursor.getString(cursor.getColumnIndexOrThrow(NotesContract.NotesEntry.COLUMN_DESCRIPTION));
-            int day_of_week = cursor.getInt(cursor.getColumnIndexOrThrow(NotesContract.NotesEntry.COLUMN_DAY_OF_WEEK));
-            int priority = cursor.getInt(cursor.getColumnIndexOrThrow(NotesContract.NotesEntry.COLUMN_PRIORITY));
-            Note note = new Note(id, title, description, day_of_week, priority);
-            notes.add(note);
-        }
-        cursor.close();
+    public void getData(){
+        LiveData<List<Note>> notesFromDB = viewModel.getNotes();
+        notesFromDB.observe(this, new Observer<List<Note>>() {
+            @Override
+            public void onChanged(List<Note> notesFromLiveData) {
+                adapter.setNotes(notesFromLiveData);
+            }
+        });
     }
 }

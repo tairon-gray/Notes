@@ -1,8 +1,6 @@
 package com.evg_ivanoff.notes;
 
-import android.content.ContentValues;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
@@ -13,6 +11,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 
 public class AddNote extends AppCompatActivity {
 
@@ -21,19 +20,19 @@ public class AddNote extends AppCompatActivity {
     private Spinner spinnerDayOfWeek;
     private RadioGroup radioGroupPriority;
 
-    private NotesDBHelper dbHelper;
-    private SQLiteDatabase database;
+    private MainViewModel viewModel;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_note);
+        viewModel = ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication()).create(MainViewModel.class);
+
         ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null){
+        if (actionBar != null) {
             actionBar.hide();
         }
-        dbHelper = new NotesDBHelper(this);
-        database = dbHelper.getWritableDatabase();
         editTextTitle = findViewById(R.id.editTextTitle);
         editTextDescription = findViewById(R.id.editTextDescription);
         spinnerDayOfWeek = findViewById(R.id.spinnerDayOfWeek);
@@ -48,12 +47,8 @@ public class AddNote extends AppCompatActivity {
         RadioButton radioButton = findViewById(radioButtonID);
         int priority = Integer.parseInt(radioButton.getText().toString());
         if (isFilled(title, description)) {
-            ContentValues contentValues = new ContentValues();
-            contentValues.put(NotesContract.NotesEntry.COLUMN_TITLE, title);
-            contentValues.put(NotesContract.NotesEntry.COLUMN_DESCRIPTION, description);
-            contentValues.put(NotesContract.NotesEntry.COLUMN_DAY_OF_WEEK, dayOfWeek + 1);
-            contentValues.put(NotesContract.NotesEntry.COLUMN_PRIORITY, priority);
-            database.insert(NotesContract.NotesEntry.TABLE_NAME, null, contentValues);
+            Note note = new Note(title, description, dayOfWeek, priority);
+            viewModel.insertNote(note);
             Intent intent = new Intent(this, MainActivity.class);
             startActivity(intent);
         } else {

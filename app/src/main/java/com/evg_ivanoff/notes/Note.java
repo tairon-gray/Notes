@@ -1,6 +1,12 @@
 package com.evg_ivanoff.notes;
 
+import androidx.room.Entity;
+import androidx.room.Ignore;
+import androidx.room.PrimaryKey;
+
+@Entity(tableName = "notes")
 public class Note {
+    @PrimaryKey(autoGenerate = true)
     private int id;
     private String title;
     private String description;
@@ -9,6 +15,14 @@ public class Note {
 
     public Note(int id, String title, String description, int dayOfWeek, int priority) {
         this.id = id;
+        this.title = title;
+        this.description = description;
+        this.dayOfWeek = dayOfWeek;
+        this.priority = priority;
+    }
+
+    @Ignore
+    public Note(String title, String description, int dayOfWeek, int priority) {
         this.title = title;
         this.description = description;
         this.dayOfWeek = dayOfWeek;
@@ -35,15 +49,25 @@ public class Note {
         return priority;
     }
 
-    public static String getDayAsString(int position){
-        switch (position){
-            case 1: return "понедельник";
-            case 2: return "вторник";
-            case 3: return "среда";
-            case 4: return "четверг";
-            case 5: return "пятница";
-            case 6: return "суббота";
-            default: return "воскресенье";
-        }
+    public void setId(int id) {
+        this.id = id;
     }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setDayOfWeek(int dayOfWeek) {
+        this.dayOfWeek = dayOfWeek;
+    }
+
+    public void setPriority(int priority) {
+        this.priority = priority;
+    }
+
+
 }

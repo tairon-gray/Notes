@@ -9,9 +9,10 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.List;
 
-public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NotesViewHolder>{
-    private ArrayList<Note> notes;
+public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NotesViewHolder> {
+    private List<Note> notes;
     private OnNoteClickListener onNoteClickListener;
 
     public void setOnNoteClickListener(OnNoteClickListener onNoteClickListener) {
@@ -24,6 +25,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NotesViewHolde
 
     interface OnNoteClickListener {
         void onNoteClick(int position);
+
         void onLongClick(int position);
     }
 
@@ -39,7 +41,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NotesViewHolde
         Note note = notes.get(position);
         holder.textViewTitle.setText(note.getTitle());
         holder.textViewDescription.setText(note.getDescription());
-        holder.textViewDayOfWeek.setText(Note.getDayAsString(note.getDayOfWeek()));
+        holder.textViewDayOfWeek.setText(getDayAsString(note.getDayOfWeek() + 1));
 
         int colorID;
         int priority = note.getPriority();
@@ -64,6 +66,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NotesViewHolde
 
     class NotesViewHolder extends RecyclerView.ViewHolder {
         private TextView textViewTitle, textViewDescription, textViewDayOfWeek;
+
         public NotesViewHolder(@NonNull View itemView) {
             super(itemView);
             textViewTitle = itemView.findViewById(R.id.textViewTitle);
@@ -72,7 +75,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NotesViewHolde
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    if(onNoteClickListener != null){
+                    if (onNoteClickListener != null) {
                         onNoteClickListener.onNoteClick(getAdapterPosition());
                     }
                 }
@@ -80,12 +83,33 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NotesViewHolde
             itemView.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View view) {
-                    if(onNoteClickListener != null){
+                    if (onNoteClickListener != null) {
                         onNoteClickListener.onLongClick(getAdapterPosition());
                     }
                     return true;
                 }
             });
         }
+    }
+
+    public static String getDayAsString(int position){
+        switch (position){
+            case 1: return "понедельник";
+            case 2: return "вторник";
+            case 3: return "среда";
+            case 4: return "четверг";
+            case 5: return "пятница";
+            case 6: return "суббота";
+            default: return "воскресенье";
+        }
+    }
+
+    public void setNotes(List<Note> notes) {
+        this.notes = notes;
+        notifyDataSetChanged();
+    }
+
+    public List<Note> getNotes() {
+        return notes;
     }
 }
