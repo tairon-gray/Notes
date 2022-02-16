@@ -1,44 +1,44 @@
 package com.evg_ivanoff.notes;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.ItemTouchHelper;
-import androidx.recyclerview.widget.ItemTouchUIUtil;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.ItemTouchHelper;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
     private RecyclerView recyclerViewNotes;
-    public static final ArrayList<Note> notes = new ArrayList<>();
+    private final ArrayList<Note> notes = new ArrayList<>();
     private NoteAdapter adapter;
+    private NotesDBHelper dbHelper;
+    private SQLiteDatabase database;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null){
+            actionBar.hide();
+        }
 
         recyclerViewNotes = findViewById(R.id.recyclerViewNotes);
-        if (notes.isEmpty()) {
-            notes.add(new Note("Стоматолог", "Вылечить зубы", "понедельник", 2));
-            notes.add(new Note("Парикмахер", "Сделать прическу", "среда", 3));
-            notes.add(new Note("Строитель", "Построить дом", "воскресенье", 2));
-            notes.add(new Note("Учитель", "Выучить уроки", "вторник", 2));
-            notes.add(new Note("Тренер", "Потренироваться", "понедельник", 1));
-            notes.add(new Note("Визажист", "Сделать макияж", "суббота", 3));
-            notes.add(new Note("Мотиватор", "Получить мотивацию", "пятница", 3));
-            notes.add(new Note("Стоматолог", "Вылечить зубы", "понедельник", 2));
-            notes.add(new Note("Парикмахер", "Сделать прическу", "среда", 3));
-            notes.add(new Note("Строитель", "Построить дом", "воскресенье", 2));
-            notes.add(new Note("Учитель", "Выучить уроки", "вторник", 2));
-        }
+
+        dbHelper = new NotesDBHelper(this);
+        database = dbHelper.getWritableDatabase();
+        getData();
+
         adapter = new NoteAdapter(notes);
         recyclerViewNotes.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         recyclerViewNotes.setAdapter(adapter);
@@ -68,13 +68,34 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void removeNote(int position){
-        notes.remove(position);
+    private void removeNote(int position) {
+        int id = notes.get(position).getId();
+        String where = NotesContract.NotesEntry._ID + " = ?";
+        String[] whereArgs = new String[]{Integer.toString(id)};
+        database.delete(NotesContract.NotesEntry.TABLE_NAME, where, whereArgs);
+        getData();
         adapter.notifyDataSetChanged();
     }
 
     public void onClickNewNote(View view) {
         Intent intent = new Intent(this, AddNote.class);
         startActivity(intent);
+    }
+
+    private void getData() {
+        notes.clear();
+        String selection = NotesContract.NotesEntry.COLUMN_PRIORITY + " < ?";
+        String[] selectionArgs = new String[]{"3"};
+        Cursor cursor = database.query(NotesContract.NotesEntry.TABLE_NAME, null, selection, selectionArgs, null, null, NotesContract.NotesEntry.COLUMN_PRIORITY);
+        while (cursor.moveToNext()) {
+            int id = cursor.getInt(cursor.getColumnIndexOrThrow(NotesContract.NotesEntry._ID));
+            String title = cursor.getString(cursor.getColumnIndexOrThrow(NotesContract.NotesEntry.COLUMN_TITLE));
+            String description = cursor.getString(cursor.getColumnIndexOrThrow(NotesContract.NotesEntry.COLUMN_DESCRIPTION));
+            int day_of_week = cursor.getInt(cursor.getColumnIndexOrThrow(NotesContract.NotesEntry.COLUMN_DAY_OF_WEEK));
+            int priority = cursor.getInt(cursor.getColumnIndexOrThrow(NotesContract.NotesEntry.COLUMN_PRIORITY));
+            Note note = new Note(id, title, description, day_of_week, priority);
+            notes.add(note);
+        }
+        cursor.close();
     }
 }
